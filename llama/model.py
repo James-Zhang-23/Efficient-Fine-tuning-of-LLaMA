@@ -203,7 +203,7 @@ class Attention(nn.Module):
         self.n_local_kv_heads = self.n_kv_heads // model_parallel_size
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = args.dim // args.n_heads
-
+        '''
         self.wq = ColumnParallelLinear(
             args.dim,
             args.n_heads * self.head_dim,
@@ -232,6 +232,11 @@ class Attention(nn.Module):
             input_is_parallel=True,
             init_method=lambda x: x,
         )
+        '''
+        self.wq = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        self.wk = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        self.wv = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        self.wo = nn.Linear(args.n_heads * self.head_dim, args.dim, bias=False)
 
         self.cache_k = torch.zeros(
             (
@@ -333,7 +338,7 @@ class FeedForward(nn.Module):
         if ffn_dim_multiplier is not None:
             hidden_dim = int(ffn_dim_multiplier * hidden_dim)
         hidden_dim = multiple_of * ((hidden_dim + multiple_of - 1) // multiple_of)
-
+        '''
         self.w1 = ColumnParallelLinear(
             dim, hidden_dim, bias=False, gather_output=False, init_method=lambda x: x
         )
@@ -343,6 +348,10 @@ class FeedForward(nn.Module):
         self.w3 = ColumnParallelLinear(
             dim, hidden_dim, bias=False, gather_output=False, init_method=lambda x: x
         )
+        '''
+        self.w1 = nn.Linear(dim, hidden_dim)
+        self.w2 = nn.Linear(hidden_dim, dim)
+        self.w3 = nn.Linear(dim, hidden_dim)
 
     def forward(self, x):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
@@ -443,10 +452,12 @@ class Transformer(nn.Module):
             self.layers.append(TransformerBlock(layer_id, params))
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        '''
         self.output = ColumnParallelLinear(
             params.dim, params.vocab_size, bias=False, init_method=lambda x: x
         )
-
+        '''
+        self.output = nn.Linear(params.dim, params.vocab_size, bias=False)
         self.freqs_cis = precompute_freqs_cis(
             # Note that self.params.max_seq_len is multiplied by 2 because the token limit for the Llama 2 generation of models is 4096. 
             # Adding this multiplier instead of using 4096 directly allows for dynamism of token lengths while training or fine-tuning.
