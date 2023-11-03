@@ -5,14 +5,16 @@ import math
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-import fairscale.nn.model_parallel.initialize as fs_init
+# import fairscale.nn.model_parallel.initialize as fs_init
 import torch
 import torch.nn.functional as F
+'''
 from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear,
     ParallelEmbedding,
     RowParallelLinear,
-)
+#)
+'''
 from torch import nn
 
 
@@ -442,11 +444,12 @@ class Transformer(nn.Module):
         self.params = params
         self.vocab_size = params.vocab_size
         self.n_layers = params.n_layers
-
+        '''
         self.tok_embeddings = ParallelEmbedding(
             params.vocab_size, params.dim, init_method=lambda x: x
         )
-
+        '''
+        self.tok_embeddings = nn.Embedding(params.vocab_size, params.dim)
         self.layers = torch.nn.ModuleList()
         for layer_id in range(params.n_layers):
             self.layers.append(TransformerBlock(layer_id, params))
