@@ -38,20 +38,23 @@ def main(
 
     prompts: List[str] = [
         # For these prompts, the expected answer is the natural continuation of the prompt
-        "I believe the meaning of life is",
-        "Simply put, the theory of relativity states that ",
-        """A brief message congratulating the team on the launch:
-
-        Hi everyone,
-        
-        I just """,
+        "What is machine learning?",
+        "To maintain a healthy work-life balance, it's essential to",
         # Few shot prompt (providing a few examples before asking model to complete more);
-        """Translate English to French:
-        
-        sea otter => loutre de mer
-        peppermint => menthe poivrée
-        plush girafe => girafe peluche
-        cheese =>""",
+
+        """Find synonyms for the following words:
+        quick => fast
+        happy => joyful
+        difficult => challenging
+        intelligent =>""",
+
+        """Match the event to the year:
+
+        Moon Landing => 1969
+        Fall of the Berlin Wall => 1989
+        Invention of the Internet => 1983
+        Start of World War I =>""",
+
     ]
     results = generator.text_completion(
         prompts,
