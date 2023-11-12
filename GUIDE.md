@@ -7,6 +7,10 @@ torchrun --nproc_per_node 1 example_text_completion.py --ckpt_dir ./llama-2-7b -
 python -m torch.distributed.run --nproc_per_node 1 example_text_completion.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
 ```
 
+```
+python example_text_completion.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
+```
+
 # Prompts & Results
 ## Zero shot prompts
 "What is machine learning?",
