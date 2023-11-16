@@ -3,11 +3,30 @@
 ## Section 4: LLaMA Inference
 
 ### 4.3 Model Architecture
-The KV cache structure is used to accelerate inference. It should be removed in order to enable traning.
+The KV cache structure is used to accelerate inference. It is removed according to the requirement.
+
+```python
+# self.cache_k = self.cache_k.to(xq)
+# self.cache_v = self.cache_v.to(xq)
+
+# self.cache_k[:bsz, start_pos : start_pos + seqlen] = xk
+# self.cache_v[:bsz, start_pos : start_pos + seqlen] = xv
+
+# keys = self.cache_k[:bsz, : start_pos + seqlen]
+# values = self.cache_v[:bsz, : start_pos + seqlen]
+keys = xk
+values = xv
+```
+
+Also modified the code for mask to adapt the change
+```python
+# mask = torch.triu(mask, diagonal=start_pos + 1).type_as(h)
+mask = torch.triu(mask, diagonal=1).type_as(h)
+```
 
 Apart from deleting code related to this part in `model.py`, we also modify part of the code in `generation.py` as below:
 
-```ruby
+```python
 for cur_pos in range(min_prompt_len, total_len):
 
     logits = self.model.forward(tokens[:, 0:cur_pos], prev_pos)
@@ -16,7 +35,7 @@ in order to fetch all token values at one time.
 
 For `fairscale.nn.model parallel.layers`, we replace them with corresponding `nn.Linear` layers.
 
-```ruby
+```python
 # Attention
 self.wq = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
 self.wk = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
@@ -33,14 +52,20 @@ self.output = nn.Linear(params.dim, params.vocab_size, bias=False)
 ```
 
 ### 4.5 Run Inference
-To generate text by directly running `python -m ...`, we also disable distributed features. Specifically, we hardcode the envrionment variables in `generation.py`:
+To generate text by directly running `python -m ...`, we also disable distributed features. Specifically, we hardcode the environment variables in `generation.py`:
 
-```ruby
+```python
 # Set environment variables for distributed training
 os.environ['RANK'] = '0'
 os.environ['WORLD_SIZE'] = '1'
 os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12345'
+```
+
+This is the command we use to run inference:
+```python
+python example_text_completion.py --ckpt_dir /project/saifhash_1190/llama2-7b
+        --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
 ```
 
 We test with some new texts.
@@ -49,13 +74,18 @@ We test with some new texts.
 ```
 What is machine learning?
 > How does it work?
-A lot of people have heard about machine learning, but few know what it actually is. Machine learning is a type of artificial intelligence (AI) that allows computers to learn from data without being explicitly programmed.
+A lot of people have heard about machine learning, but few know what it actually is.
+Machine learning is a type of artificial intelligence (AI) that allows computers to 
+learn from data without being explicitly programmed.
 Machine learning algorithms are used to make predictions based on patterns in data. For
 ```
 ==================================
 ```
 To maintain a healthy work-life balance, it's essential to
-> have a healthy lifestyle. It is not always easy to maintain a healthy lifestyle, especially when you have a busy schedule. However, it is important to make time for yourself and your health. This article will discuss how to maintain a healthy work-life balance with a healthy lifest
+> have a healthy lifestyle. It is not always easy to maintain a healthy lifestyle, 
+especially when you have a busy schedule. However, it is important to make time 
+for yourself and your health. This article will discuss how to maintain a healthy 
+work-life balance with a healthy lifest
 ```
 ==================================
 #### Few shot prompts
