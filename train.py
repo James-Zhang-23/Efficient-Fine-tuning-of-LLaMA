@@ -138,7 +138,10 @@ class Llama:
                 for cur_pos in range(len(input), total_len):
                     logits = self.model.forward(input_tensor[:, 0:cur_pos], prev_pos)
 
-                    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target_tensor.view(-1))
+                    # Select the corresponding target token
+                    current_target = target_tensor[:, cur_pos - 1]
+
+                    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), current_target.view(-1))
                     loss.backward()
                     optimizer.step()
 
