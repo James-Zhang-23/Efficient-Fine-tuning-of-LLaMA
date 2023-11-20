@@ -183,8 +183,8 @@ def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple
 
 
 def main(
-    ckpt_dir: str,
-    tokenizer_path: str,
+    ckpt_dir: str = './llama-2-7b',
+    tokenizer_path: str = 'tokenizer.model',
     max_seq_len: int = 128,
     max_gen_len: int = 64,
     max_batch_size: int = 4,
@@ -201,7 +201,7 @@ def main(
     )
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
-    model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
+    # model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
 
 
 if __name__ == "__main__":
