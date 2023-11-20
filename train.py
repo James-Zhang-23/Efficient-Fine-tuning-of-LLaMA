@@ -148,23 +148,15 @@ class Llama:
                     loss.backward()
                     optimizer.step()
 
-# not finished yet
-###############################################################################
-                    next_token = torch.argmax(logits[:, -1], dim=-1)
-                    next_token = next_token.reshape(-1)
-                    # only replace token if prompt has already been generated
-                    next_token = torch.where(
-                        input_text_mask[:, cur_pos], input_tensor[:, cur_pos], next_token
-                    )
-                    input_tensor[:, cur_pos] = next_token
+                    input_tensor[:, cur_pos] = current_target
                     eos_reached |= (~input_text_mask[:, cur_pos]) & (
-                        next_token == self.tokenizer.eos_id
+                        current_target == self.tokenizer.eos_id
                     )
                     prev_pos = cur_pos
                     target_pos += 1
                     if all(eos_reached):
                         break
-###############################################################################
+
 
 
                 
