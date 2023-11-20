@@ -122,7 +122,7 @@ class Llama:
         pad_id = self.tokenizer.pad_id
 
         for epoch in range(epochs):
-            for input, target in prompt_tokens, target_tokens:
+            for input, target in zip(prompt_tokens, target_tokens):
                 total_len = 256
                 optimizer.zero_grad()
 
