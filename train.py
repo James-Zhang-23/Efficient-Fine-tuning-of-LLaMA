@@ -135,13 +135,16 @@ class Llama:
                 eos_reached = torch.tensor([False] * 1, device="cuda")
                 input_text_mask = input_tensor != pad_id
 
+                target_pos = 0
+
                 for cur_pos in range(len(input), total_len):
                     logits = self.model.forward(input_tensor[:, 0:cur_pos], prev_pos)
 
                     # Select the corresponding target token
-                    current_target = target_tensor[:, cur_pos - 1]
-
-                    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), current_target.view(-1))
+                    current_target = target_tensor[:, target_pos]
+                    
+                    pred_token_logits = logits[:, -1, :]
+                    loss = F.cross_entropy(pred_token_logits.view(-1, pred_token_logits.size(-1)), current_target.view(-1))
                     loss.backward()
                     optimizer.step()
 
@@ -158,6 +161,7 @@ class Llama:
                         next_token == self.tokenizer.eos_id
                     )
                     prev_pos = cur_pos
+                    target_pos += 1
                     if all(eos_reached):
                         break
 ###############################################################################
