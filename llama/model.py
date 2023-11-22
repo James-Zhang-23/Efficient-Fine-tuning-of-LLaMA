@@ -16,6 +16,7 @@ from fairscale.nn.model_parallel.layers import (
 #)
 '''
 from torch import nn
+import lora
 
 
 @dataclass
@@ -235,9 +236,11 @@ class Attention(nn.Module):
             init_method=lambda x: x,
         )
         '''
-        self.wq = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        # self.wq = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        self.wq = lora.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
         self.wk = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
-        self.wv = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        # self.wv = nn.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
+        self.wv = lora.Linear(args.dim, args.n_heads * self.head_dim, bias=False)
         self.wo = nn.Linear(args.n_heads * self.head_dim, args.dim, bias=False)
 
         # self.cache_k = torch.zeros(

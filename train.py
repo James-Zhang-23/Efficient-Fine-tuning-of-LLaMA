@@ -17,6 +17,8 @@ from fairscale.nn.model_parallel.initialize import (
 from llama.model import ModelArgs, Transformer
 from llama.tokenizer import Tokenizer
 
+import lora
+
 # Set environment variables for distributed training
 os.environ['RANK'] = '0'
 os.environ['WORLD_SIZE'] = '1'
@@ -100,6 +102,10 @@ class Llama:
         torch.set_default_tensor_type(torch.cuda.HalfTensor)
         model = Transformer(model_args)
         model.load_state_dict(checkpoint, strict=False)
+        
+        # convert model for LoRA
+        lora.mark_only_lora_as_trainable(model)
+
         print(f"Loaded in {time.time() - start_time:.2f} seconds")
 
         return Llama(model, tokenizer)
