@@ -84,7 +84,7 @@ Match the event to the year:
         Start of the Cold War => 1947
         Start of the Cuban
 
-==================================
+===================================
 
 What is the capital of France?
 > sierp machines, a lot nobody else should be a is a out of the a spread of a bones, and, the
