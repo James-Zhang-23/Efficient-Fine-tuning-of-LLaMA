@@ -8,6 +8,7 @@ from typing import List, Literal, Optional, Tuple, TypedDict
 
 import torch
 import torch.nn.functional as F
+from torch.cuda.amp import GradScaler, autocast
 from fairscale.nn.model_parallel.initialize import (
     get_model_parallel_rank,
     initialize_model_parallel,
@@ -99,7 +100,10 @@ class Llama:
         )
         tokenizer = Tokenizer(model_path=tokenizer_path)
         model_args.vocab_size = tokenizer.n_words
-        torch.set_default_tensor_type(torch.cuda.HalfTensor)
+        # FP16
+        # torch.set_default_tensor_type(torch.cuda.HalfTensor)
+        # FP32
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
         model = Transformer(model_args)
         model.load_state_dict(checkpoint, strict=False)
         
@@ -126,7 +130,11 @@ class Llama:
 
         params = self.model.params
         pad_id = self.tokenizer.pad_id
-
+    
+        # accumulation step
+        step = 8.0
+        # mixed precision scaler
+        scaler = GradScaler()
         for epoch in range(epochs):
             for input, target in zip(prompt_tokens, target_tokens):
                 total_len = 256
@@ -142,17 +150,24 @@ class Llama:
                 input_text_mask = input_tensor != pad_id
 
                 target_pos = 0
-
+                optimizer.zero_grad()
                 for cur_pos in range(len(input), total_len):
                     logits = self.model.forward(input_tensor[:, 0:cur_pos], prev_pos)
 
                     # Select the corresponding target token
                     current_target = target_tensor[:, target_pos]
-                    
                     pred_token_logits = logits[:, -1, :]
-                    loss = F.cross_entropy(pred_token_logits.view(-1, pred_token_logits.size(-1)), current_target.view(-1))
-                    loss.backward()
-                    optimizer.step()
+                    with torch.autocast(device_type='cuda', dtype=torch.float16):
+                        loss = F.cross_entropy(pred_token_logits.view(-1, pred_token_logits.size(-1)), current_target.view(-1))
+                    loss /= step
+                    # loss.backward()
+                    scaler.scale(loss).backward()
+
+                    if (cur_pos + 1) % step == 0 or cur_pos == total_len - 1:
+                        # optimizer.step()
+                        scaler.step(optimizer)
+                        scaler.update()
+                        optimizer.zero_grad()
 
                     input_tensor[:, cur_pos] = current_target
                     eos_reached |= (~input_text_mask[:, cur_pos]) & (
@@ -161,7 +176,9 @@ class Llama:
                     prev_pos = cur_pos
                     target_pos += 1
                     if all(eos_reached):
+                        print(target_pos)
                         break
+        print("Complete")
 
 
 
@@ -187,7 +204,7 @@ def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple
 def main(
     ckpt_dir: str = './llama-2-7b',
     tokenizer_path: str = 'tokenizer.model',
-    max_seq_len: int = 128,
+    max_seq_len: int = 256,
     max_gen_len: int = 64,
     max_batch_size: int = 4,
     epochs: int = 3,
@@ -203,7 +220,7 @@ def main(
     )
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
-    # model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
+    model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
 
 
 if __name__ == "__main__":
