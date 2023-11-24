@@ -8,13 +8,13 @@ from typing import List, Literal, Optional, Tuple, TypedDict
 
 import torch
 import torch.nn.functional as F
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import GradScaler
 from fairscale.nn.model_parallel.initialize import (
     get_model_parallel_rank,
     initialize_model_parallel,
     model_parallel_is_initialized,
 )
-
+import llama
 from llama.model import ModelArgs, Transformer
 from llama.tokenizer import Tokenizer
 
@@ -55,7 +55,7 @@ SPECIAL_TAGS = [B_INST, E_INST, "<<SYS>>", "<</SYS>>"]
 UNSAFE_ERROR = "Error: special tags are not allowed as part of the prompt."
 
 
-class Llama:
+class LlamaAlpaca(llama.Llama):
     @staticmethod
     def build(
         ckpt_dir: str,
@@ -64,7 +64,7 @@ class Llama:
         max_batch_size: int,
         model_parallel_size: Optional[int] = None,
         seed: int = 1,
-    ) -> "Llama":
+    ) -> "LlamaAlpaca":
         
         if not torch.distributed.is_initialized():
             torch.distributed.init_process_group("nccl")
@@ -112,7 +112,7 @@ class Llama:
 
         print(f"Loaded in {time.time() - start_time:.2f} seconds")
 
-        return Llama(model, tokenizer)
+        return LlamaAlpaca(model, tokenizer)
 
     def __init__(self, model: Transformer, tokenizer: Tokenizer):
         self.model = model
@@ -176,12 +176,11 @@ class Llama:
                     prev_pos = cur_pos
                     target_pos += 1
                     if all(eos_reached):
-                        print(target_pos)
+                        # print(target_pos)
                         break
         print("Complete")
-
-
-
+        torch.save(self.model.state_dict(), 'alpaca_dict.pth')
+        
                 
 def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple[List[int], List[int]]]:
     with open(json_path, 'r') as file:
@@ -212,7 +211,7 @@ def main(
     json_dataset_path: str = 'alpaca_data.json',
 ):
 
-    model = Llama.build(
+    model = LlamaAlpaca.build(
         ckpt_dir=ckpt_dir,
         tokenizer_path=tokenizer_path,
         max_seq_len=max_seq_len,
@@ -221,6 +220,7 @@ def main(
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
     model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
+    # torch.save(model.state_dict, 'state_dict.pth')
 
 
 if __name__ == "__main__":
