@@ -16,6 +16,7 @@ from fairscale.nn.model_parallel.layers import (
 #)
 '''
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 import lora
 
 
@@ -361,7 +362,10 @@ class FeedForward(nn.Module):
         self.w3 = nn.Linear(dim, hidden_dim)
 
     def forward(self, x):
+        # Checkpoint
+        #def check_forward(x):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
+        #return checkpoint(check_forward, x, use_reentrant=False)
 
 
 class TransformerBlock(nn.Module):
@@ -422,6 +426,10 @@ class TransformerBlock(nn.Module):
         h = x + self.attention.forward(
             self.attention_norm(x), start_pos, freqs_cis, mask
         )
+        # Checkpoint
+        # def check_forward(x):
+            # return self.feed_forward.forward(self.ffn_norm(x))
+        # out = h + checkpoint(check_forward, h, use_reentrant=False)
         out = h + self.feed_forward.forward(self.ffn_norm(h))
         return out
 
@@ -449,6 +457,8 @@ class Transformer(nn.Module):
         self.params = params
         self.vocab_size = params.vocab_size
         self.n_layers = params.n_layers
+        # max(n_layers) is 22 for v100 gpu
+        self.n_layers = 2
         '''
         self.tok_embeddings = ParallelEmbedding(
             params.vocab_size, params.dim, init_method=lambda x: x
@@ -456,7 +466,7 @@ class Transformer(nn.Module):
         '''
         self.tok_embeddings = nn.Embedding(params.vocab_size, params.dim)
         self.layers = torch.nn.ModuleList()
-        for layer_id in range(params.n_layers):
+        for layer_id in range(self.n_layers):
             self.layers.append(TransformerBlock(layer_id, params))
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
