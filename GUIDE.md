@@ -15,6 +15,10 @@ python example_text_completion.py --ckpt_dir /project/saifhash_1190/llama2-7b --
 python train.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
 ```
 
+```
+python alpaca_test.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
+```
+
 # Prompts & Results
 ## Zero shot prompts
 "What is machine learning?",
@@ -81,3 +85,11 @@ Match the event to the year:
         Start of the Cuban
 
 ==================================
+
+What is the capital of France?
+> sierp machines, a lot nobody else should be a is a out of the a spread of a bones, and, the
+ Hinweis. 1, 6,
+4.
+19. 1. 16,
+5. 3.7 31
+ 2 
