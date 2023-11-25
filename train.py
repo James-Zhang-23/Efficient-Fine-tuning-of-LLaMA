@@ -179,7 +179,7 @@ class LlamaAlpaca(llama.Llama):
                         # print(target_pos)
                         break
         print("Complete")
-        torch.save(self.model.state_dict(), 'alpaca_dict.pth')
+        torch.save(self.model.state_dict(), 'model_state_dict.pth')
         
                 
 def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple[List[int], List[int]]]:
@@ -220,7 +220,7 @@ def main(
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
     model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
-    # torch.save(model.state_dict, 'state_dict.pth')
+    # torch.save(model.state_dict, 'model_state_dict.pth')
 
 
 if __name__ == "__main__":

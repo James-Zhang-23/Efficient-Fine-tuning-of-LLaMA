@@ -23,7 +23,7 @@ def main(
         max_seq_len=max_seq_len,
         max_batch_size=max_batch_size,
     )
-    generator.model.load_state_dict(torch.load('alpaca_dict.pth'))
+    generator.model.load_state_dict(torch.load('model_state_dict.pth'))
     generator.model.eval()
     prompts: List[str] = [
         # Zero shot prompts
