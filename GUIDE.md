@@ -1,4 +1,4 @@
-### Inference example
+# Inference commands
 ```
 torchrun --nproc_per_node 1 example_text_completion.py --ckpt_dir ./llama-2-7b --tokenizer_path tokenizer.model --max_seq_len 128 --max_batch_size 4
 ```
@@ -11,15 +11,7 @@ python -m torch.distributed.run --nproc_per_node 1 example_text_completion.py --
 python example_text_completion.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
 ```
 
-```
-python train.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
-```
-
-```
-python alpaca_test.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
-```
-
-# Prompts & Results
+# Inference prompts & results
 ## Zero shot prompts
 "What is machine learning?",
 "To maintain a healthy work-life balance, it's essential to",
@@ -86,6 +78,19 @@ Match the event to the year:
 
 ===================================
 
+
+
+# Fine-tuning commands
+```
+python train.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
+```
+
+```
+python alpaca_test.py --ckpt_dir /project/saifhash_1190/llama2-7b --tokenizer_path /project/saifhash_1190/llama2-7b/tokenizer.model
+```
+
+
+# Fine-tuning prompts & results
 What is the capital of France?
 > sierp machines, a lot nobody else should be a is a out of the a spread of a bones, and, the
  Hinweis. 1, 6,
