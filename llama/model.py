@@ -458,7 +458,7 @@ class Transformer(nn.Module):
         self.vocab_size = params.vocab_size
         self.n_layers = params.n_layers
         # max(n_layers) is 22 for v100 gpu
-        self.n_layers = 12
+        self.n_layers = 32
         '''
         self.tok_embeddings = ParallelEmbedding(
             params.vocab_size, params.dim, init_method=lambda x: x

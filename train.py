@@ -122,7 +122,7 @@ class LlamaAlpaca(llama.Llama):
         self,
         prompt_tokens: List[List[int]],
         target_tokens: List[List[int]],
-        epochs: int = 3,
+        epochs: int = 1,
         learning_rate: float = 5e-5
     ):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=learning_rate)
@@ -179,7 +179,10 @@ class LlamaAlpaca(llama.Llama):
                         # print(target_pos)
                         break
         print("Complete")
-        torch.save(self.model.state_dict(), 'model_state_dict.pth')
+        # Save the final LoRA checkpoint at the end of training
+        checkpoint = lora.lora_state_dict(self.model)
+        torch.save(checkpoint,"lora-finetuned.pth")  
+        # torch.save(self.model.state_dict(), 'model_state_dict.pth')
         
                 
 def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple[List[int], List[int]]]:
@@ -189,7 +192,7 @@ def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple
     input_tokens = []
     target_tokens = []
     # read only first 200 examples
-    data = data[:200]
+    data = data[:10]
 
     for item in data:
         input = tokenizer.encode(item['instruction'] + item['input'], bos=True, eos=False)
@@ -206,7 +209,7 @@ def main(
     max_seq_len: int = 256,
     max_gen_len: int = 64,
     max_batch_size: int = 4,
-    epochs: int = 3,
+    epochs: int = 1,
     learning_rate: float = 5e-5,
     json_dataset_path: str = 'alpaca_data.json',
 ):
@@ -217,6 +220,20 @@ def main(
         max_seq_len=max_seq_len,
         max_batch_size=max_batch_size,
     )
+
+
+    # Count total parameters
+    total_params = sum(p.numel() for p in model.model.parameters())
+
+    # Count trainable parameters
+    trainable_params = sum(p.numel() for p in model.model.parameters() if p.requires_grad)
+
+    # Calculate percentage
+    trainable_percentage = (trainable_params / total_params) * 100
+
+    print(f"Total parameters: {total_params}")
+    print(f"Trainable parameters: {trainable_params}")
+    print(f"Percentage of trainable parameters: {trainable_percentage:.2f}%")
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
     model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)

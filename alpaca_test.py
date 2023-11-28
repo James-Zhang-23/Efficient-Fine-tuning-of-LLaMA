@@ -6,6 +6,7 @@ from typing import List
 import torch
 import torch.nn.functional as F
 from train import LlamaAlpaca
+from llama import Llama
 
 
 def main(
@@ -23,13 +24,21 @@ def main(
         max_seq_len=max_seq_len,
         max_batch_size=max_batch_size,
     )
-    generator.model.load_state_dict(torch.load('model_state_dict.pth'))
+    # Load the pretrained state dictionary (without applying it to the model)
+    # pretrained_dict = torch.load('/project/saifhash_1190/llama2-7b/consolidated.00.pth', map_location="cuda")
+    # Load the model state as usual
+    # generator.model.load_state_dict(pretrained_dict, strict=False)
+    # load finetuned LoRA weight
+    generator.model.load_state_dict(torch.load('lora-finetuned.pth',map_location="cuda"), strict=False)
+    # Check for parameters that were not correctly loaded
+    # for name, param in generator.model.named_parameters():
+    #     if name in pretrained_dict and not torch.equal(pretrained_dict[name], param):
+    #         print(f"Parameter '{name}' may not have been correctly loaded.")
+
     generator.model.eval()
     prompts: List[str] = [
         # Zero shot prompts
-        "What are the three primary colors?",
-        "How can we reduce air pollution?",
-        "What is the capital of France?",
+        "Give three tips for staying healthy.",
 
         # Few shot prompts (providing a few examples before asking model to complete more);
         # tbd
