@@ -363,9 +363,9 @@ class FeedForward(nn.Module):
 
     def forward(self, x):
         # Checkpoint
-        #def check_forward(x):
+        # def check_forward(x):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
-        #return checkpoint(check_forward, x, use_reentrant=False)
+        # return checkpoint(check_forward, x, use_reentrant=True)
 
 
 class TransformerBlock(nn.Module):
@@ -427,10 +427,10 @@ class TransformerBlock(nn.Module):
             self.attention_norm(x), start_pos, freqs_cis, mask
         )
         # Checkpoint
-        # def check_forward(x):
-            # return self.feed_forward.forward(self.ffn_norm(x))
-        # out = h + checkpoint(check_forward, h, use_reentrant=False)
-        out = h + self.feed_forward.forward(self.ffn_norm(h))
+        def check_forward(x):
+            return self.feed_forward.forward(self.ffn_norm(x))
+        out = h + checkpoint(check_forward, h, use_reentrant=True)
+        # out = h + self.feed_forward.forward(self.ffn_norm(h))
         return out
 
 

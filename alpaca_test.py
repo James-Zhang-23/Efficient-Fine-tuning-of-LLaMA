@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from train import LlamaAlpaca
 from llama import Llama
 
+import random
 
 def main(
     ckpt_dir: str,
@@ -35,13 +36,19 @@ def main(
     #     if name in pretrained_dict and not torch.equal(pretrained_dict[name], param):
     #         print(f"Parameter '{name}' may not have been correctly loaded.")
 
+    rand_index = [random.randint(0, 199) for i in range(4)]
     generator.model.eval()
-    prompts: List[str] = [
+    # prompts: List[str] = [
         # Zero shot prompts
-        "Give three tips for staying healthy.",
-
+        # "Give three tips for staying healthy.",
+        # "How did Julius Caesar die?",
         # Few shot prompts (providing a few examples before asking model to complete more);
         # tbd
+    # ]
+    with open("alpaca_data.json", 'r') as file:
+        data = json.load(file)
+    prompts: List[str] = [
+       data[i]["instruction"] + data[i]["input"] for i in rand_index
     ]
     results = generator.text_completion(
         prompts,
