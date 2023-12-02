@@ -122,7 +122,8 @@ class LlamaAlpaca(llama.Llama):
         self,
         prompt_tokens: List[List[int]],
         target_tokens: List[List[int]],
-        epochs: int = 1,
+        start: int = 0,
+        epochs: int = 5,
         learning_rate: float = 5e-5
     ):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=learning_rate)
@@ -135,7 +136,8 @@ class LlamaAlpaca(llama.Llama):
         step = 8.0
         # mixed precision scaler
         scaler = GradScaler()
-        for epoch in range(epochs):
+        for epoch in range(start, epochs):
+            print(f'current epoch = {epoch}')
             for input, target in zip(prompt_tokens, target_tokens):
                 total_len = 256
                 optimizer.zero_grad()
@@ -178,11 +180,21 @@ class LlamaAlpaca(llama.Llama):
                     if all(eos_reached):
                         # print(target_pos)
                         break
+            torch.save({
+                'epoch': epoch,
+                'lora_state_dict': lora.lora_state_dict(self.model),
+                }, "lora_per_epoch.pth")
         print("Complete")
         # Save the final LoRA checkpoint at the end of training
         checkpoint = lora.lora_state_dict(self.model)
         torch.save(checkpoint,"lora-finetuned.pth")  
         # torch.save(self.model.state_dict(), 'model_state_dict.pth')
+
+    def load_checkpoint(self, filename="lora_per_epoch.pth"):
+        checkpoint = torch.load(filename, map_location="cuda")
+        self.model.load_state_dict(checkpoint['lora_state_dict'], strict=False)
+        epoch = checkpoint['epoch']
+        return epoch
         
                 
 def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple[List[int], List[int]]]:
@@ -192,7 +204,7 @@ def load_and_process_dataset(json_path: str, tokenizer: Tokenizer) -> List[Tuple
     input_tokens = []
     target_tokens = []
     # read only first 200 examples
-    data = data[:10]
+    data = data[:200]
 
     for item in data:
         input = tokenizer.encode(item['instruction'] + item['input'], bos=True, eos=False)
@@ -209,7 +221,7 @@ def main(
     max_seq_len: int = 256,
     max_gen_len: int = 64,
     max_batch_size: int = 4,
-    epochs: int = 1,
+    epochs: int = 5,
     learning_rate: float = 5e-5,
     json_dataset_path: str = 'alpaca_data.json',
 ):
@@ -236,7 +248,13 @@ def main(
     print(f"Percentage of trainable parameters: {trainable_percentage:.2f}%")
 
     prompt_tokens, target_tokens = load_and_process_dataset(json_dataset_path, model.tokenizer)
-    model.train(prompt_tokens, target_tokens, epochs=epochs, learning_rate=learning_rate)
+    filename = "lora_per_epoch.pth"
+    start_epoch = 0
+    if os.path.isfile(filename) and os.path.getsize(filename) > 0:
+        last_epoch = model.load_checkpoint(filename)
+        print(f'last epoch = {last_epoch}')
+        start_epoch = last_epoch + 1
+    model.train(prompt_tokens, target_tokens, start=start_epoch, epochs=epochs, learning_rate=learning_rate)
     # torch.save(model.state_dict, 'model_state_dict.pth')
 
 
