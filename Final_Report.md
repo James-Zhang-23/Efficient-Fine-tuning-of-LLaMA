@@ -18,6 +18,26 @@ Percentage of trainable parameters: 0.12%
 40402MiB / 40960MiB
 
 #### Gradient checkpoints
+A checkpoint is placed during the forwarding process of the TransformerBlock as follows:
+```ruby
+...
+def forward(
+        self,
+        x: torch.Tensor,
+        start_pos: int,
+        freqs_cis: torch.Tensor,
+        mask: Optional[torch.Tensor],
+    ):
+        h = x + self.attention.forward(
+            self.attention_norm(x), start_pos, freqs_cis, mask
+        )
+        # Checkpoint
+        def check_forward(x):
+            return self.feed_forward.forward(self.ffn_norm(x))
+        out = h + checkpoint(check_forward, h, use_reentrant=True)
+        return out
+...
+```
 
 #### Training loss for every epoch:
 Epoch 0: Average Loss = 1.325083038618483
@@ -31,10 +51,10 @@ For each of the techniques applied (low precision, gradient accumulation, gradie
 
 | Technique | Memory Reduction | Computational Cost Reduction | Impact on Accuracy |
 | --- | --- | --- | --- |
-| Low Precision | Yes | Yes | Yes |
-| Gradient Accumulation | No | Yes | No |
-| Gradient Checkpointing | No | Yes | No |
-| LoRA | Reduce model gradient and optimizer state | Yes | Decrease accuracy compare to training on all parameters |
+| Low Precision | Reduce gradient and optimizer | Reduce loss calculations | Decrease accuracy |
+| Gradient Accumulation | Reduce gradient storage only | Reduce gradient calculations | No impact on accuracy |
+| Gradient Checkpointing | Reduce gradient storage | Increase optimizer and loss calculations | No impact on accuracy |
+| LoRA | Reduce model gradient and optimizer state | Only calculate gradient for LoRA parameters | Decrease accuracy compared to training on all parameters |
 
 
 ### Example prompts and results (fine-tuned model)
@@ -56,6 +76,37 @@ Explain why the given definition is wrong. A mole is an animal that lives underg
 
 Generate a password of 8 characters. 
 > 1q2w3e4r s5t6u7v8
+
+==================================
+
+Below are 4 random questions beyond the range of [:200].
+
+Name two different ways to reduce poverty in a community.
+> 1. Improve education opportunities and access to healthcare, 2. Increase access to financing and investment opportunities, 3. Provide subsidies and incentives, 4. Foster entrepreneurship and creativity, 5. Create jobs and
+
+==================================
+
+Convert the following number from base 10 to hexadecimal: 278
+> 11 07 def 11 07 def def 11 07 def 11 07 def 11 07 def 11 07 def 11 07 def 11 07 def 11
+
+==================================
+
+Suggest a suitable card game for a birthday party with 10 year old kids.
+> - Casino Royale 
+> - War 
+> - Crazy Eights 
+> - Uno 
+> - Candy Land 
+> - Chutes and Ladders 
+> - Tic-Tac-Toe
+> - Mancala
+> - Memory 
+> - Happy Birthday
+
+==================================
+
+Explain the difference between a personal computer and a server
+> A personal computer (PC) is a general-purpose computing device designed for individual or home use. It is typically a small, portable device with a limited amount of memory and processing power. A server, on the other hand, is a more specialized and powerful computing device designed for use in business,
 
 ==================================
 
@@ -140,7 +191,38 @@ Comment: `var length = 8;
  
 
 ==================================
+Name two different ways to reduce poverty in a community.
+> Name two different ways to reduce poverty in a community.
+> 1. How does the government help reduce poverty?
+> 2. What are some things that people can do to help reduce poverty?
+> 3. What are some ways to help reduce poverty?
+> 4. What are some ways that people
 
+==================================
 
+Convert the following number from base 10 to hexadecimal: 278
+> Convert the following number from base 10 to hexadecimal: 278.
+Convert the following number from base 10 to hexadecimal: 278.
+### Solution:
+ ```python
+import math
+def convert_to_hexadec
+```
+==================================
+
+Suggest a suitable card game for a birthday party with 10 year old kids.
+> I am looking for a suitable card game for a birthday party with 10 year old kids. I have heard of Uno and Apples to Apples but they are not the best choices. I would like to know of a suitable card game.
+card-games party
+I've
+
+==================================
+
+Explain the difference between a personal computer and a server
+> .
+How do you explain the difference between a personal computer and a server?
+A personal computer is a computer that is used by a single user, whereas a server is a computer that is used to provide services to multiple users.
+How do you explain the difference between a personal computer and a server? A personal
+
+==================================
 
 
