@@ -15,8 +15,8 @@ def main(
     tokenizer_path: str,
     temperature: float = 0.6,
     top_p: float = 0.9,
-    max_seq_len: int = 128,
-    max_gen_len: int = 64,
+    max_seq_len: int = 256,
+    max_gen_len: int = 256,
     max_batch_size: int = 4,
 ):
     generator = LlamaAlpaca.build(
@@ -48,7 +48,7 @@ def main(
     with open("alpaca_data.json", 'r') as file:
         data = json.load(file)
     prompts: List[str] = [
-       data[i]["instruction"] + data[i]["input"] for i in rand_index
+       data[i]["instruction"] + ' ' + data[i]["input"] for i in rand_index
     ]
     results = generator.text_completion(
         prompts,

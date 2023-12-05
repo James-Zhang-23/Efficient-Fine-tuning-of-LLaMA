@@ -138,6 +138,8 @@ class LlamaAlpaca(llama.Llama):
         scaler = GradScaler()
         for epoch in range(start, epochs):
             print(f'current epoch = {epoch}')
+            loss_values = []
+            loss_per_step = 0.0
             for input, target in zip(prompt_tokens, target_tokens):
                 total_len = 256
                 optimizer.zero_grad()
@@ -162,10 +164,13 @@ class LlamaAlpaca(llama.Llama):
                     with torch.autocast(device_type='cuda', dtype=torch.float16):
                         loss = F.cross_entropy(pred_token_logits.view(-1, pred_token_logits.size(-1)), current_target.view(-1))
                     loss /= step
+                    loss_per_step += loss.item()
                     # loss.backward()
                     scaler.scale(loss).backward()
 
                     if (cur_pos + 1) % step == 0 or cur_pos == total_len - 1:
+                        loss_values.append(loss_per_step)
+                        loss_per_step = 0.0
                         # optimizer.step()
                         scaler.step(optimizer)
                         scaler.update()
@@ -180,6 +185,11 @@ class LlamaAlpaca(llama.Llama):
                     if all(eos_reached):
                         # print(target_pos)
                         break
+            loss_filename = f"loss_epoch_{epoch}.pth"
+            torch.save({
+                'epoch': epoch,
+                'loss': loss_values,
+            }, loss_filename)
             torch.save({
                 'epoch': epoch,
                 'lora_state_dict': lora.lora_state_dict(self.model),

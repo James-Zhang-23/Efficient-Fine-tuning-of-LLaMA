@@ -11,8 +11,8 @@ def main(
     tokenizer_path: str,
     temperature: float = 0.6,
     top_p: float = 0.9,
-    max_seq_len: int = 128,
-    max_gen_len: int = 64,
+    max_seq_len: int = 256,
+    max_gen_len: int = 256,
     max_batch_size: int = 4,
 ):
     """
@@ -38,22 +38,12 @@ def main(
 
     prompts: List[str] = [
         # For these prompts, the expected answer is the natural continuation of the prompt
-        "What is machine learning?",
-        "To maintain a healthy work-life balance, it's essential to",
+        "Explain why a given topic is important. Environmental protection",
+        "Rewrite the following sentence without changing the meaning. The sales report was not accurate.",
+        "Explain why the given definition is wrong. A mole is an animal that lives underground.",
+        "Generate a password of 8 characters.",
         # Few shot prompt (providing a few examples before asking model to complete more);
 
-        """Find synonyms for the following words:
-        quick => fast
-        happy => joyful
-        difficult => challenging
-        intelligent =>""",
-
-        """Match the event to the year:
-
-        Moon Landing => 1969
-        Fall of the Berlin Wall => 1989
-        Invention of the Internet => 1983
-        Start of World War I =>""",
 
     ]
     results = generator.text_completion(
