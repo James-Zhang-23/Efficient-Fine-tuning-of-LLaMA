@@ -350,7 +350,7 @@ For each of the techniques applied (low precision, gradient accumulation, gradie
 | Technique | Memory Reduction | Computational Cost Reduction | Impact on Accuracy |
 | --- | --- | --- | --- |
 | Low Precision | Reduce gradient and optimizer | Reduce loss calculations | Decrease accuracy |
-| Gradient Accumulation | Reduce gradient storage only | Reduce gradient calculations | No impact on accuracy |
+| Gradient Accumulation | Reduce gradient storage only | Reduce gradient calculations | Might indirectly affect accuracy during large accumulations |
 | Gradient Checkpointing | Reduce gradient storage | Increase optimizer and loss calculations | No impact on accuracy |
 | LoRA | Reduce model gradient and optimizer state | Only calculate gradient for LoRA parameters | Decrease accuracy compared to training on all parameters |
 
